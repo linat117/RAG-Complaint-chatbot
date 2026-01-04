@@ -1,0 +1,12 @@
+venv/
+data/
+vector_store/
+ipynb_checkpoints/
+__pycache__/
+*.pyc 
+*.pyo 
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
