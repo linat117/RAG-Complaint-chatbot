@@ -1,0 +1,17 @@
+Evidence: Unit tests added and run for this interim period.
+Run from project root: python -m pytest tests/ -v --tb=short
+
+Example expected output (replace with your actual run):
+
+============================= test session starts ==============================
+platform win32 -- Python 3.x.x, pytest-x.x.x
+rootdir: d:\KAIM\rag-complaint-chatbot
+plugins: ...
+collected 7 items
+
+tests/test_filtering.py ...                                               [ 42%]
+tests/test_text_cleaning.py ....                                          [100%]
+
+============================== 7 passed in X.XXs ===============================
+
+Replace the content above with the actual output of your pytest run and keep this file in the repo as evidence.
