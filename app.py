@@ -12,21 +12,31 @@ sys.path.append(str(project_root))
 
 import gradio as gr
 from src.rag_pipeline import create_rag_pipeline
+from pathlib import Path
+
+def _get_rag_config():
+    try:
+        from config.load_config import load_config, get_project_root
+        cfg = load_config()
+        root = get_project_root()
+        paths = cfg.get("paths", {})
+        rag_cfg = cfg.get("rag", {})
+        return str(root / paths.get("vector_store", "vector_store")), rag_cfg.get("collection_name", "complaints")
+    except Exception:
+        return "vector_store", "complaints"
 
 # Initialize RAG pipeline (loads once at startup)
 print("Initializing RAG pipeline...")
-rag_pipeline = create_rag_pipeline(
-    vector_store_path="vector_store",
-    collection_name="complaints"
-)
+_vector_store_path, _collection_name = _get_rag_config()
+rag_pipeline = create_rag_pipeline(vector_store_path=_vector_store_path, collection_name=_collection_name)
 print("✓ RAG pipeline ready!")
 
 
 def format_sources(chunks):
-    """Format retrieved chunks for display."""
+    """Format retrieved chunks for display, including retrieval score (distance)."""
     if not chunks:
         return "No sources retrieved."
-    
+
     formatted = []
     for i, chunk in enumerate(chunks, 1):
         metadata = chunk.get('metadata', {})
@@ -35,16 +45,19 @@ def format_sources(chunks):
         complaint_id = metadata.get('complaint_id', 'Unknown')
         company = metadata.get('company', 'Unknown')
         text = chunk.get('text', '')
-        
+        distance = chunk.get('distance')
+        score_line = f"- Relevance (distance, lower = more similar): {distance:.4f}\n" if distance is not None else ""
+
         formatted.append(
             f"**Source {i}:**\n"
             f"- Complaint ID: {complaint_id}\n"
             f"- Product: {product}\n"
             f"- Issue: {issue}\n"
             f"- Company: {company}\n"
+            f"{score_line}"
             f"- Text: {text[:300]}{'...' if len(text) > 300 else ''}\n"
         )
-    
+
     return "\n---\n".join(formatted)
 
 
@@ -142,8 +155,8 @@ with gr.Blocks(title="CrediTrust Complaint Analysis Chatbot") as demo:
     gr.Markdown(
         """
         ---
-        **Note:** This chatbot uses Retrieval-Augmented Generation (RAG) to answer questions based on real customer complaint data.
-        The sources shown below each answer are the actual complaint excerpts used to generate the response.
+        **Note:** This chatbot uses RAG to answer from real complaint data. The sources are the excerpts used for the answer.
+        **How to read relevance:** Lower distance = more similar to your question; use it to gauge how strongly the answer is supported by the retrieved complaints.
         """
     )
 

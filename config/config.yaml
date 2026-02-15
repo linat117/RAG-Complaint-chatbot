@@ -1,0 +1,22 @@
+# RAG Complaint Chatbot - central config
+# Paths are relative to project root unless absolute
+
+paths:
+  raw_data: "data/raw/complaints.csv"
+  processed_data: "data/processed/filtered_complaints.csv"
+  sample_data: "data/processed/sample_complaints.csv"
+  vector_store: "vector_store"
+  evaluation_output: "output/evaluation_results.md"
+
+data:
+  seed: 42
+  sample_size: 12000
+  preprocess_eda_chunks: 3   # stop after this many chunks when sample_for_eda=True
+
+models:
+  embedding: "sentence-transformers/all-MiniLM-L6-v2"
+  llm: "gpt2"   # optional: distilgpt2, etc.
+
+rag:
+  collection_name: "complaints"
+  top_k: 5

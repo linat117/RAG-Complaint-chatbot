@@ -1,6 +1,6 @@
 Copy everything below and paste into Google Docs.
 
-This submission includes (1) work completed during this interim period with evidence (tests added, where to find them, how to run and capture output) and (2) a planned vs actual comparison for the interim period, plus the forward-looking plan (priorities and day-by-day schedule).
+Final submission. This document includes (1) work completed in this period with evidence (unit tests, config, CI, evaluation metric, UI retrieval scores, runbook), (2) a planned vs actual comparison, and (3) the forward-looking plan (priorities and day-by-day schedule) for any remaining or follow-up work.
 
 
 Week 12 Interim Submission — 10 Academy
@@ -57,16 +57,16 @@ The system is positioned for internal and regulatory-adjacent use where verifiab
 • Stable choices: Stratified sampling with seed, single embedding model for index and query, and persistent ChromaDB give reproducible indexing.
 • Lightweight default: GPT-2 and CPU-friendly embedding allow running without GPU; pipeline accepts other HuggingFace models.
 
-3.3 What Is Missing From a Production-Grade System
+3.3 What Is Missing From a Production-Grade System (addressed in final submission where noted)
 
-• Automated tests: No test files or pytest/unittest; only manual runs and the evaluation script.
-• CI/CD: No .github/workflows or other automation for lint, test, or build.
-• Quantified evaluation: No faithfulness, relevance, or retrieval metrics; evaluation table has Quality Score/Comments as TBD.
-• Config and reproducibility: Paths, seeds, and model names are hardcoded; no single config file or env schema.
-• Preprocessing default: preprocess_pipeline.py runs with sample_for_eda=True in __main__, so it stops after a few chunks unless changed.
-• Explainability beyond citations: No similarity scores or confidence in the UI; no structured why this chunk explanation.
-• Error and edge handling: Limited handling for missing vector store, empty retrieval, or API failures in one place.
-• Dependency and env spec: requirements.txt exists but no environment.yml or Dockerfile for full reproducibility.
+• Automated tests: Addressed. tests/ added with unit tests; run python -m pytest tests/ -v --tb=short.
+• CI/CD: Addressed. .github/workflows/ci.yml runs pytest on push/PR.
+• Quantified evaluation: Addressed. evaluation.py computes mean retrieval distance and writes an Evaluation Summary to output/evaluation_results.md.
+• Config and reproducibility: Addressed. config/config.yaml and config/load_config.py; preprocess_pipeline, task2_pipeline, evaluation, and app use config; preprocessing default is sample_for_eda=False.
+• Explainability beyond citations: Addressed. UI shows per-source relevance (distance) and a short "How to read relevance" note.
+• Environment and runbook: Addressed. RUNBOOK.md documents Environment and Full pipeline steps.
+• Error and edge handling: Limited handling for missing vector store or empty retrieval remains.
+• Dependency and env spec: requirements.txt present; no environment.yml or Dockerfile.
 
 Interim period: Completed improvements and evidence
 
@@ -84,6 +84,36 @@ Where in repo:
 • tests/conftest.py — Adds project root to Python path so tests can import src.
 • tests/test_filtering.py — Tests for filter_products and remove_empty_narratives (src/filtering.py).
 • tests/test_text_cleaning.py — Tests for clean_text and apply_text_cleaning (src/text_cleaning.py).
+
+Improvement 2: Central config (config/)
+
+What was done: Introduced config/config.yaml and config/load_config.py so paths, seed, sample_size, embedding/LLM names, and RAG settings are in one place. Preprocess and Task 2 pipelines load from config; preprocessing default is sample_for_eda=False for full runs.
+
+Where in repo: config/config.yaml, config/load_config.py. Evidence: src/preprocess_pipeline.py and src/task2_pipeline.py import from config.load_config.
+
+Improvement 3: GitHub Actions CI
+
+What was done: Added .github/workflows/ci.yml to run pytest on push/PR to main or master.
+
+Where in repo: .github/workflows/ci.yml. Evidence: workflow file; run tests locally with python -m pytest tests/ -v --tb=short.
+
+Improvement 4: Quantitative evaluation metric
+
+What was done: evaluation.py now computes mean retrieval distance per question and overall, and appends an "Evaluation Summary (Quantitative)" section to output/evaluation_results.md (metric description and mean distance).
+
+Where in repo: src/evaluation.py. Evidence: run python -m src.evaluation and check output/evaluation_results.md for the summary section.
+
+Improvement 5: Retrieval scores in UI and explainability note
+
+What was done: app.py format_sources() now shows "Relevance (distance, lower = more similar): X.XXXX" for each source. A short note in the UI explains how to interpret the score.
+
+Where in repo: app.py. Evidence: launch python app.py, ask a question, and check the sources panel for distance values and the footer note.
+
+Improvement 6: Environment and full-pipeline runbook
+
+What was done: RUNBOOK.md added with Environment (Python, venv, pip install, config) and Full pipeline (Step 1–4 commands and expected outputs). Includes test and CI notes.
+
+Where in repo: RUNBOOK.md.
 
 Evidence (code snippet): tests/test_filtering.py
 
@@ -114,28 +144,28 @@ Planned vs actual (this interim period)
 
 Comparison of what was planned for this interim period versus what was completed. Use this to report progress in future submissions.
 
-• Unit tests for preprocessing (filtering, text cleaning) — Planned: Yes. Actual: Done. Evidence: tests/test_filtering.py, tests/test_text_cleaning.py. Reproduce: from project root run python -m pytest tests/ -v --tb=short; optionally save output to output/pytest_results.txt.
-• CI workflow (e.g. GitHub Actions) — Planned: Yes (next). Actual: Not yet. Evidence: N/A.
-• Config externalisation — Planned: Yes. Actual: Not yet. Evidence: N/A.
-• Quantitative evaluation metric — Planned: Yes. Actual: Not yet. Evidence: N/A.
-• Retrieval scores in UI — Planned: Yes. Actual: Not yet. Evidence: N/A.
-• Environment and runbook documentation — Planned: Yes. Actual: Not yet. Evidence: N/A.
+• Unit tests for preprocessing (filtering, text cleaning) — Planned: Yes. Actual: Done. Evidence: tests/test_filtering.py, tests/test_text_cleaning.py. Reproduce: python -m pytest tests/ -v --tb=short.
+• CI workflow (GitHub Actions) — Planned: Yes. Actual: Done. Evidence: .github/workflows/ci.yml.
+• Config externalisation — Planned: Yes. Actual: Done. Evidence: config/config.yaml, config/load_config.py; pipelines use it; sample_for_eda=False by default.
+• Quantitative evaluation metric — Planned: Yes. Actual: Done. Evidence: src/evaluation.py writes mean retrieval distance and Evaluation Summary to output/evaluation_results.md.
+• Retrieval scores in UI — Planned: Yes. Actual: Done. Evidence: app.py shows distance per source and "How to read relevance" note.
+• Environment and runbook documentation — Planned: Yes. Actual: Done. Evidence: RUNBOOK.md.
 
 4. Gap Analysis
 
 • Code quality — Is there a consistent style (e.g. formatter/linter)? Status: No. Evidence: No pyproject.toml, .flake8, ruff, or pre-commit config.
-• Code quality — Are paths and config externalised? Status: No. Evidence: Paths like data/raw/complaints.csv, vector_store and seeds hardcoded in preprocess_pipeline.py, task2_pipeline.py, rag_pipeline.py.
-• Testing — Are there unit tests? Status: Partial. Evidence: tests/test_filtering.py and tests/test_text_cleaning.py added (7 tests). Run: python -m pytest tests/ -v --tb=short from project root.
+• Code quality — Are paths and config externalised? Status: Yes. Evidence: config/config.yaml and config/load_config.py; preprocess_pipeline, task2_pipeline, evaluation, and app use config.
+• Testing — Are there unit tests? Status: Yes. Evidence: tests/test_filtering.py, tests/test_text_cleaning.py (7 tests). Run: python -m pytest tests/ -v --tb=short.
 • Testing — Are there integration tests (e.g. RAG query)? Status: No. Evidence: Only src/evaluation.py as a manual evaluation script, not an automated test.
-• Documentation — Is the pipeline documented for a new developer? Status: Partial. Evidence: README and report.md describe flow; README has UTF-16 BOM; no API/docs for src modules.
-• Documentation — Is there a runbook or ops guide? Status: No. Evidence: No runbook, env vars, or deployment notes.
-• Reproducibility — Can the environment be recreated from a single spec? Status: Partial. Evidence: requirements.txt present; no version pinning strategy doc, no Docker/conda.
-• Reproducibility — Is preprocessing fully reproducible (no EDA shortcut)? Status: Partial. Evidence: preprocess_pipeline.py line 57: run_pipeline(sample_for_eda=True) stops early by default.
+• Documentation — Is the pipeline documented for a new developer? Status: Partial. Evidence: README, report.md, RUNBOOK.md (Environment and Full pipeline).
+• Documentation — Is there a runbook or ops guide? Status: Yes. Evidence: RUNBOOK.md.
+• Reproducibility — Can the environment be recreated from a single spec? Status: Partial. Evidence: requirements.txt and RUNBOOK.md; no Docker/conda.
+• Reproducibility — Is preprocessing fully reproducible (no EDA shortcut)? Status: Yes. Evidence: preprocess_pipeline __main__ calls run_pipeline(sample_for_eda=False).
 • Visualization — Is there a user-facing interface? Status: Yes. Evidence: app.py — Gradio chat UI with source panel.
-• Visualization — Are retrieval or evaluation results visualised? Status: Partial. Evidence: EDA notebook and eda.py; evaluation is markdown table only, no charts.
+• Visualization — Are retrieval or evaluation results visualised? Status: Partial. Evidence: EDA notebook and eda.py; evaluation markdown includes numeric summary; no charts.
 • Business impact — Are outputs traceable to source data? Status: Yes. Evidence: Sources shown in UI and in evaluation_results.md with complaint ID, product, issue.
-• Business impact — Is there quantified quality (e.g. metrics)? Status: No. Evidence: evaluation_results.md has Quality Score and Comments as TBD; no automated metrics.
-• Explainability — Are retrieval scores or confidence shown? Status: Partial. Evidence: rag_pipeline.py returns distance in chunks but UI does not show it; no confidence for the answer.
+• Business impact — Is there quantified quality (e.g. metrics)? Status: Yes. Evidence: evaluation.py writes mean retrieval distance and Evaluation Summary to evaluation_results.md.
+• Explainability — Are retrieval scores or confidence shown? Status: Yes. Evidence: app.py shows distance per source and a "How to read relevance" note.
 
 5. Improvement Priorities (3–5) with Time Estimates
 
@@ -186,4 +216,4 @@ Priority 5: Document Environment and One-Click Run
 
 Total estimated effort: approximately 18–23 hours over 7 days (realistic for a week with other commitments).
 
-Document generated for 10 Academy Week 12 Interim Submission. It describes the original project, gaps, work completed this interim period (with evidence and planned vs actual), and the plan for the coming week. File references and evidence paths are from the current state of the repo.
+Document generated for 10 Academy Week 12 Final Submission. It describes the original project, gaps, work completed (tests, config, CI, evaluation metric, UI scores, runbook) with evidence and planned vs actual, and the plan for any follow-up work. File references are from the current state of the repo.
